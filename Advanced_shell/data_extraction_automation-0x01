@@ -6,15 +6,17 @@ height=$(jq -r '.height' data.json)
 weight=$(jq -r '.weight' data.json)
 type=$(jq -r '.types[0].type.name' data.json)
 
-# Convert height (decimetres → metres)
-height_m=$(echo "$height" | awk '{printf "%.1f", $1 / 10}')
+# Convert height (decimeters → meters)
+formatted_height=$(echo "$height / 10" | bc -l | sed 's/^\./0./')
 
-# Convert weight (hectograms → kilograms)
-weight_kg=$(echo "$weight" | awk '{printf "%.0f", $1 / 10}')
+# Convert weight (hectograms → kg)
+formatted_weight=$(echo "$weight / 10" | bc -l | sed 's/^\./0./')
 
-# Capitalize the Pokémon name and type using sed
-name_cap=$(echo "$name" | sed 's/.*/\u&/')
-type_cap=$(echo "$type" | sed 's/.*/\u&/')
+# Capitalize type using sed
+type=$(echo "$type" | sed 's/.*/\u&/')
 
-# Final human-readable output
-echo "$name_cap is of type $type_cap, weighs ${weight_kg}kg, and is ${height_m}m tall."
+# Capitalize name using sed
+name=$(echo "$name" | sed 's/.*/\u&/')
+
+# Final output
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
