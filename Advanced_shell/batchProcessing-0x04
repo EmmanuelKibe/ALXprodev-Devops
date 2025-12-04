@@ -1,50 +1,56 @@
 #!/bin/bash
 
-# List of Pokémon to fetch
+# Pokémon list
 POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 
-# Directory to save JSON files
+# Output directory
 OUTPUT_DIR="pokemon_data"
 mkdir -p "$OUTPUT_DIR"
 
-# Error log file
+# Error log
 ERROR_FILE="errors.txt"
-> "$ERROR_FILE"  # Clear previous errors
+> "$ERROR_FILE"
 
-# Maximum retries for failed requests
+# Max retries
 MAX_RETRIES=3
 
-# Function to fetch Pokémon data with retry logic
+# Function to fetch a Pokémon with retries
 fetch_pokemon() {
     local name="$1"
     local retries=$MAX_RETRIES
-    local delay=2
     local success=0
 
     for ((i=1; i<=retries; i++)); do
-        echo "Fetching $name (Attempt $i)..."
         http_code=$(curl -s -w "%{http_code}" -o "$OUTPUT_DIR/$name.json" "https://pokeapi.co/api/v2/pokemon/$name")
-
         if [ "$http_code" -eq 200 ]; then
             echo "Saved $name to $OUTPUT_DIR/$name.json ✅"
             success=1
             break
         else
-            echo "Failed $name (HTTP $http_code), retrying in $delay seconds..."
-            sleep $delay
+            echo "$name failed attempt $i"
+            sleep 1
         fi
     done
 
     if [ $success -eq 0 ]; then
-        echo "Failed to fetch $name after $retries attempts." >> "$ERROR_FILE"
+        echo "Failed to fetch $name" >> "$ERROR_FILE"
     fi
 }
 
-# Launch all fetches in parallel
+# Launch all fetches in parallel and store their PIDs
+PIDS=()
 for pokemon in "${POKEMONS[@]}"; do
     fetch_pokemon "$pokemon" &
+    PIDS+=($!)
 done
 
-# Wait for all background processes to complete
-wait
+# List all background jobs
+echo "Current background jobs:"
+jobs
+
+# Wait for all PIDs to complete
+for pid in "${PIDS[@]}"; do
+    wait "$pid"
+done
+
 echo "All Pokémon data fetching processes completed."
