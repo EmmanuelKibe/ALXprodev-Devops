@@ -1,22 +1,22 @@
 #!/bin/bash
 
-# Extract fields using jq
+# Extract fields with jq
 name=$(jq -r '.name' data.json)
 height=$(jq -r '.height' data.json)
 weight=$(jq -r '.weight' data.json)
 type=$(jq -r '.types[0].type.name' data.json)
 
-# Convert height (decimeters → meters)
-formatted_height=$(echo "$height / 10" | bc -l | sed 's/^\./0./')
-
-# Convert weight (hectograms → kg)
-formatted_weight=$(echo "$weight / 10" | bc -l | sed 's/^\./0./')
+# Convert to human-readable units:
+# height decimeters → meters (divide by 10)
+# weight hectograms → kg (divide by 10)
+formatted_height=$(echo "$height" | awk '{printf "%.1f", $1 / 10}')
+formatted_weight=$(echo "$weight" | awk '{printf "%.1f", $1 / 10}')
 
 # Capitalize type using sed
-type=$(echo "$type" | sed 's/.*/\u&/')
+type_capitalized=$(echo "$type" | sed 's/.*/\u&/')
 
-# Capitalize name using sed
-name=$(echo "$name" | sed 's/.*/\u&/')
+# Capitalize name using awk (demonstrates required use)
+name_capitalized=$(echo "$name" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
 
 # Final output
-echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
+echo "$name_capitalized is of type $type_capitalized, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
